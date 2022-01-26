@@ -1,19 +1,13 @@
 export default class ColumnChart {
     chartHeight = 50;
-    constructor(chartData) {
+    constructor(chartData = {}) {
         this.chartData = chartData;
         this.render();
     }
 
     getTemplate() {
-        if (!this.chartData) {
-            return `
-                <div class="column-chart column-chart_loading" style="--chart-height: ${this.chartHeight}">
-                </div>
-            `;
-        }
         return `
-            <div class="column-chart" style="--chart-height: ${this.chartHeight}">
+            <div class="column-chart column-chart_loading" style="--chart-height: ${this.chartHeight}">
                 <div class="column-chart__title">
                     ${this.getChartLabel()}
                     ${this.getViewAllLink()}
@@ -31,12 +25,7 @@ export default class ColumnChart {
     }
 
     getViewAllLink() {
-        if (!this.chartData.link) {
-            return '';
-        }
-        return `
-            <a href="${this.chartData.link}" class="column-chart__link">View all</a>
-        `;
+        return this.chartData.link ? `<a href="${this.chartData.link}" class="column-chart__link">View all</a>` : '';
     }
 
     getChartLabel() {
@@ -63,16 +52,17 @@ export default class ColumnChart {
             return '';
         }
         const maxValue = Math.max(...this.chartData.data);
-        return this.chartData.data.reduce((acc, chartItem) => {
+        return this.chartData.data.map(chartItem => {
             const scale = this.chartHeight / maxValue;
             const value = Math.floor(chartItem * scale);
             const percent = (chartItem / maxValue * 100).toFixed(0);
-            return acc + `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
-        }, '');
+            return `<div style="--value: ${value}" data-tooltip="${percent}%"></div>`;
+        }).join('');
     }
 
     destroy() {
         this.remove();
+        this.element = null;
     }
 
     remove() {
@@ -94,5 +84,8 @@ export default class ColumnChart {
         const element = document.createElement('div');
         element.innerHTML = this.getTemplate();
         this.element = element.firstElementChild;
+        if (this.chartData.data && this.chartData.data.length) {
+            this.element.classList.remove('column-chart_loading');
+        }
     }
 }
